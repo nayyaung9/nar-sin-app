@@ -4,7 +4,7 @@ export const trackSchema = {
   name: TRACK_SCHEMA,
   primaryKey: 'id',
   properties: {
-    id: {type: 'int', indexed: true},
+    id: {type: 'string', indexed: true},
     name: {type: 'string'},
     image: {type: 'string'},
     artist: {type: 'string'},

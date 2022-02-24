@@ -5,15 +5,16 @@ import {apiEndpoint, spotifyEndpoint} from '@config/api';
 import Header from '@components/Header';
 import {SPOTIFY_TOKEN} from 'react-native-dotenv';
 import {storeTrack} from '@database/mutation';
+import {SongState} from 'src/interfaces';
 
 const HomeScreen: React.FC = ({navigation}: any) => {
   const [isRecording, setIsRecording] = useState<boolean>(false);
-  const [songDetail, setSongDetail] = useState({});
+  const [songDetail, setSongDetail] = useState<SongState | any>({});
   const [isNotFound, setIsNotFound] = useState<boolean>(false);
 
-  let audioPath = AudioUtils.DownloadsDirectoryPath + '/narsin.m4a';
+  let audioPath = AudioUtils.MusicDirectoryPath + '/narsin.m4a';
 
-  const getSongMetaData = async (songId: number) => {
+  const getSongMetaData = async (songId: number, genre: string) => {
     try {
       const spotifyAPI = `${spotifyEndpoint}/v1/tracks/${songId}`;
       const res = await fetch(spotifyAPI, {
@@ -27,13 +28,14 @@ const HomeScreen: React.FC = ({navigation}: any) => {
         setIsRecording(false);
         let json = await res.json();
         const payload = {
+          id: json.id,
           name: json.name,
-          image: json?.album.images[1].url,
-          artist: json?.album.artists[0].name,
-          genre: 'pop',
+          image: json?.album.images[0]?.url,
+          artist: json?.artists[0]?.name,
+          genre,
         };
         storeTrack(payload);
-        setSongDetail(json);
+        setSongDetail(payload);
       } else {
         console.log('failed');
       }
@@ -45,6 +47,7 @@ const HomeScreen: React.FC = ({navigation}: any) => {
   const onRecord = async () => {
     setIsRecording(true);
     const isGranted = await AudioRecorder.requestAuthorization();
+    console.log('isGranted', isGranted);
     if (!isGranted) return;
 
     try {
@@ -71,19 +74,28 @@ const HomeScreen: React.FC = ({navigation}: any) => {
         })
           .then(res => res.json())
           .then(data => {
-            console.log('data', data?.music);
             setIsRecording(false);
-            setSongDetail({});
-            getSongMetaData(data?.music[0].external_metadata?.spotify.track.id);
+            if (!data?.music[0].external_metadata?.spotify) {
+              const songState = {
+                title: data?.music[0].title,
+                image: null,
+                artist: data?.music[0]?.artists[0].name,
+                genre: data?.music[0]?.genres[0].name,
+              };
+              setSongDetail(songState);
+            }
+            getSongMetaData(
+              data?.music[0].external_metadata?.spotify.track.id,
+              data?.music[0]?.genres[0].name,
+            );
           })
           .catch(err => {
-            console.log('err', err);
             setIsNotFound(true);
             setIsRecording(false);
           });
       }, 8000);
     } catch (e) {
-      console.log('ERROR', e);
+      console.log('e', e)
       setIsRecording(false);
     }
   };
@@ -109,12 +121,17 @@ const HomeScreen: React.FC = ({navigation}: any) => {
         <View style={styles.bottomSheet}>
           <View style={styles.row}>
             <Image
-              source={{uri: songDetail.album.images[1].url}}
-              style={{width: 80, height: 80, borderRadius: 4}}
+              source={
+                songDetail.image === null
+                  ? require('@assets/images/song-banner.jpeg')
+                  : {uri: songDetail.image}
+              }
+              style={{width: 80, height: 80, borderRadius: 10}}
             />
             <View style={styles.dataCol}>
-              <Text>{songDetail?.name}</Text>
-              <Text>{songDetail?.album.artists[0].name}</Text>
+              <Text style={styles.themeText}>{songDetail?.title}</Text>
+              <Text style={styles.themeText}>{songDetail?.artist}</Text>
+              <Text style={styles.themeText}>{songDetail?.genre}</Text>
             </View>
           </View>
         </View>
@@ -170,7 +187,7 @@ const styles = StyleSheet.create({
     // alignItems: 'center',
   },
   dataCol: {
-    marginLeft: 8,
+    marginLeft: 16,
   },
   alignCenter: {
     alignItems: 'center',
@@ -178,6 +195,9 @@ const styles = StyleSheet.create({
   notFoundText: {
     fontFamily: 'Poppins-Regular',
     fontSize: 17,
+  },
+  themeText: {
+    fontFamily: 'Poppins-Medium',
   },
 });
 export default HomeScreen;
