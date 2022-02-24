@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 type HeaderProps = {
   title?: string;
@@ -23,7 +24,7 @@ const Header = ({title}: HeaderProps) => {
           {title || 'Shwe Music Discovery App'}
         </Text>
         <TouchableOpacity onPress={() => navigation.navigate('HistoryList')}>
-          <Text style={styles.appTitle}>History</Text>
+          <Icon name="playlist-music-outline" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
     </View>

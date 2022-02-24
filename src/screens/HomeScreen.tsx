@@ -24,6 +24,8 @@ const HomeScreen: React.FC = ({navigation}: any) => {
         },
       });
 
+      console.log(res)
+
       if (res.ok) {
         setIsRecording(false);
         let json = await res.json();
@@ -47,7 +49,6 @@ const HomeScreen: React.FC = ({navigation}: any) => {
   const onRecord = async () => {
     setIsRecording(true);
     const isGranted = await AudioRecorder.requestAuthorization();
-    console.log('isGranted', isGranted);
     if (!isGranted) return;
 
     try {
@@ -70,19 +71,21 @@ const HomeScreen: React.FC = ({navigation}: any) => {
         fetch(`${apiEndpoint}/api/song-upload`, {
           method: 'post',
           body: data,
-          // body: JSON.stringify(data),
         })
           .then(res => res.json())
           .then(data => {
             setIsRecording(false);
             if (!data?.music[0].external_metadata?.spotify) {
               const songState = {
-                title: data?.music[0].title,
+                id: data?.acrid,
+                name: data?.music[0].title,
                 image: null,
                 artist: data?.music[0]?.artists[0].name,
                 genre: data?.music[0]?.genres[0].name,
               };
               setSongDetail(songState);
+              storeTrack(songState);
+
             }
             getSongMetaData(
               data?.music[0].external_metadata?.spotify.track.id,
@@ -93,9 +96,8 @@ const HomeScreen: React.FC = ({navigation}: any) => {
             setIsNotFound(true);
             setIsRecording(false);
           });
-      }, 8000);
+      }, 5000);
     } catch (e) {
-      console.log('e', e)
       setIsRecording(false);
     }
   };
@@ -118,7 +120,10 @@ const HomeScreen: React.FC = ({navigation}: any) => {
         </View>
       )}
       {songDetail && Object.keys(songDetail).length > 1 && (
-        <View style={styles.bottomSheet}>
+        <TouchableOpacity
+          style={styles.bottomSheet}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('HistoryList')}>
           <View style={styles.row}>
             <Image
               source={
@@ -129,12 +134,12 @@ const HomeScreen: React.FC = ({navigation}: any) => {
               style={{width: 80, height: 80, borderRadius: 10}}
             />
             <View style={styles.dataCol}>
-              <Text style={styles.themeText}>{songDetail?.title}</Text>
-              <Text style={styles.themeText}>{songDetail?.artist}</Text>
-              <Text style={styles.themeText}>{songDetail?.genre}</Text>
+              <Text style={styles.songTitle}>{songDetail?.name}</Text>
+              <Text style={styles.artistText}>{songDetail?.artist}</Text>
+              <Text style={styles.genreText}>{songDetail?.genre}</Text>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -184,9 +189,10 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'flex-start',
-    // alignItems: 'center',
+    alignItems: 'center',
   },
   dataCol: {
+    flex: 1,
     marginLeft: 16,
   },
   alignCenter: {
@@ -196,8 +202,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     fontSize: 17,
   },
-  themeText: {
+  songTitle: {
+    fontSize: 17,
     fontFamily: 'Poppins-Medium',
+  },
+  artistText: {
+    fontFamily: 'Poppins-Regular',
+  },
+  genreText: {
+    fontSize: 11,
+    fontFamily: 'Poppins-Regular',
   },
 });
 export default HomeScreen;

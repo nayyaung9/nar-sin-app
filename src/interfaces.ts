@@ -1,5 +1,5 @@
 export interface SongState {
-  title: string;
+  name: string;
   image: string;
   artist: string;
   genre: string;
