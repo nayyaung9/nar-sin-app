@@ -3,6 +3,7 @@ import {StyleSheet, View, Text, TouchableOpacity, Image} from 'react-native';
 import {AudioRecorder, AudioUtils} from 'react-native-audio';
 import {apiEndpoint, spotifyEndpoint} from '@config/api';
 import Header from '@components/Header';
+import {SPOTIFY_TOKEN} from 'react-native-dotenv';
 
 const HomeScreen: React.FC = ({navigation}: any) => {
   const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -17,7 +18,7 @@ const HomeScreen: React.FC = ({navigation}: any) => {
       const res = await fetch(spotifyAPI, {
         method: 'GET',
         headers: {
-          Authorization: '',
+          Authorization: `Bearer ${SPOTIFY_TOKEN}`,
         },
       });
 
@@ -36,7 +37,6 @@ const HomeScreen: React.FC = ({navigation}: any) => {
   const onRecord = async () => {
     setIsRecording(true);
     const isGranted = await AudioRecorder.requestAuthorization();
-
     if (!isGranted) return;
 
     try {
@@ -63,19 +63,20 @@ const HomeScreen: React.FC = ({navigation}: any) => {
         })
           .then(res => res.json())
           .then(data => {
+            console.log('data', data?.music);
             setIsRecording(false);
             setSongDetail({});
             getSongMetaData(data?.music[0].external_metadata?.spotify.track.id);
           })
           .catch(err => {
+            console.log('err', err);
             setIsNotFound(true);
             setIsRecording(false);
           });
-      }, 10000);
+      }, 8000);
     } catch (e) {
+      console.log('ERROR', e);
       setIsRecording(false);
-
-      console.log('record error', e);
     }
   };
 
@@ -93,7 +94,7 @@ const HomeScreen: React.FC = ({navigation}: any) => {
       </View>
       {isNotFound && (
         <View style={[styles.bottomSheet, styles.alignCenter]}>
-          <Text>Song Not Found {':('}</Text>
+          <Text style={styles.notFoundText}>Song Not Found {':('}</Text>
         </View>
       )}
       {songDetail && Object.keys(songDetail).length > 1 && (
@@ -126,8 +127,8 @@ const styles = StyleSheet.create({
   },
   searchSongBtn: {
     backgroundColor: '#7944ed',
-    width: 150,
-    height: 150,
+    width: 180,
+    height: 180,
     borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
@@ -165,6 +166,10 @@ const styles = StyleSheet.create({
   },
   alignCenter: {
     alignItems: 'center',
+  },
+  notFoundText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 17,
   },
 });
 export default HomeScreen;
