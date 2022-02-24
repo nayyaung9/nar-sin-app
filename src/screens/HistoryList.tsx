@@ -1,7 +1,17 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {View, Text, StyleSheet, StatusBar} from 'react-native';
+import {fetchSearchedTracks} from '@database/query';
 
 const HistoryList = () => {
+  useEffect(() => {
+    fetchSearchedTracks()
+      .then(data => {
+        console.log('tracks', data);
+      })
+      .catch(err => {
+        console.log('ERR', err);
+      });
+  }, []);
   return (
     <View style={styles.root}>
       <StatusBar backgroundColor={'#7944ed'} />

@@ -4,6 +4,7 @@ import {AudioRecorder, AudioUtils} from 'react-native-audio';
 import {apiEndpoint, spotifyEndpoint} from '@config/api';
 import Header from '@components/Header';
 import {SPOTIFY_TOKEN} from 'react-native-dotenv';
+import {storeTrack} from '@database/mutation';
 
 const HomeScreen: React.FC = ({navigation}: any) => {
   const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -25,6 +26,13 @@ const HomeScreen: React.FC = ({navigation}: any) => {
       if (res.ok) {
         setIsRecording(false);
         let json = await res.json();
+        const payload = {
+          name: json.name,
+          image: json?.album.images[1].url,
+          artist: json?.album.artists[0].name,
+          genre: 'pop',
+        };
+        storeTrack(payload);
         setSongDetail(json);
       } else {
         console.log('failed');
